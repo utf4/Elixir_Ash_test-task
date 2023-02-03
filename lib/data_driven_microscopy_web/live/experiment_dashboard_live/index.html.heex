@@ -1,0 +1,95 @@
+<h1 class="text-3xl text-primaryb-100 mb-8">Dashboard</h1>
+<div class="flex flex-row">
+  <.sidebar items={@projects} active={@active} click="select-project">
+    <:option :let={proj}>
+      <h4 class="text-md">
+        <%= proj.type %>
+      </h4>
+      <h2 class="text-2xl">
+        <%= proj.name %>
+      </h2>
+    </:option>
+  </.sidebar>
+  <%= case Enum.find(@projects, &(&1.id == @active)) do %>
+    <% %{runs: runs} = active_project -> %>
+      <div class="w-full border border-primaryb-100 rounded bg-white">
+        <ul class="flex text-lg text-center text-primaryb-100 w-full items-center">
+          <li class="p-4">
+            Runs
+          </li>
+          <li class="p-4 ml-auto">
+            <.link navigate={~p"/experiments/#{active_project.id}/runs/new"}>
+              <.button>
+                + New Run
+              </.button>
+            </.link>
+          </li>
+        </ul>
+        <table class="w-full text-sm text-left text-primaryb-100">
+          <thead class="text-xs uppercase bg-primaryb-20">
+            <tr>
+              <th scope="col" class="p-4">
+                <div class="flex items-center">
+                  <input
+                    id="checkbox-all-search"
+                    type="checkbox"
+                    class="w-4 h-4 rounded focus:ring-2"
+                  />
+                  <label for="checkbox-all-search" class="sr-only">checkbox</label>
+                </div>
+              </th>
+              <th scope="col" class="py-3 px-6">
+                Title
+              </th>
+              <th scope="col" class="py-3 px-6">
+                Description
+              </th>
+              <th scope="col" class="py-3 px-6"></th>
+              <th scope="col" class="py-3 px-6"></th>
+              <th scope="col" class="py-3 px-6">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for run <- runs do %>
+              <tr>
+                <td class="p-4">
+                  <div class="flex items-center">
+                    <input
+                      id="checkbox-all-search"
+                      type="checkbox"
+                      class="w-4 h-4 rounded focus:ring-2"
+                    />
+                    <label for="checkbox-all-search" class="sr-only">checkbox</label>
+                  </div>
+                </td>
+                <td class="py-3 px-6">
+                  <%= run.title %>
+                </td>
+                <td class="py-3 px-6">
+                  <%= run.description %>
+                </td>
+                <td class="py-3 px-6">
+                  <button class="btn">
+                    View experiment setup
+                  </button>
+                </td>
+                <td class="py-3 px-6">
+                  <button class="btn">
+                    Results
+                  </button>
+                </td>
+                <td class="py-3 px-6">
+                  <%= case run.status do %>
+                    <% :done -> %>
+                      <span class="text-green-500">Complete</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+  <% end %>
+</div>

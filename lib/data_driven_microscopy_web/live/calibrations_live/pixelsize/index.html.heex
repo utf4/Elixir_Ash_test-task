@@ -1,0 +1,46 @@
+<.header>
+  Your Pixelsize Calibrations
+  <:actions>
+    <.link patch={~p"/hardware/calibration/pixelsize/new"}>
+      <.button>New Calibration</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="calibrations" rows={@calibrations} active={fn _ -> false end} nkeys={1}>
+  <:col :let={calibration} label="Objective">
+    <%= read_objective_name(calibration.objective_id) %>
+  </:col>
+
+  <:col :let={calibration} label="System"><%= read_system_name(calibration.objective_id) %></:col>
+  <:col :let={calibration} label="Value (µm)"><%= calibration.value %></:col>
+  <:action :let={calibration}>
+    <.link patch={~p"/hardware/calibration/pixelsize/#{calibration}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={calibration}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: calibration.id})}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/hardware/calibration/pixelsize")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.CalibrationLive.Pixelsize.FormComponent}
+    id={:new}
+    navigate={~p"/hardware/calibration/pixelsize"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+    calibrations={@calibrations}
+    objectives={@objectives}
+  />
+</.modal>

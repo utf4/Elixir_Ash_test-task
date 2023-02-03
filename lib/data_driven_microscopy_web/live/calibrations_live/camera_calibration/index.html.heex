@@ -1,0 +1,48 @@
+<.header>
+  Your Camera Calibrations
+  <:actions>
+    <.link patch={~p"/hardware/calibration/camera/new"}>
+      <.button>New Calibration</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<DataDrivenMicroscopyWeb.HardwareComponents.hardware_navbar />
+
+<.table id="calibrations" rows={@calibrations} active={fn _ -> false end} nkeys={2}>
+  <:col :let={calibration} label="System"><%= read_system_name(calibration.camera_id) %></:col>
+  <:col :let={calibration} label="Camera"><%= read_camera_name(calibration.camera_id) %></:col>
+  <:col :let={calibration} label="A11"><%= Float.floor(calibration.a11, 5) %></:col>
+  <:col :let={calibration} label="A12"><%= Float.floor(calibration.a12, 5) %></:col>
+  <:col :let={calibration} label="A21"><%= Float.floor(calibration.a21, 5) %></:col>
+  <:col :let={calibration} label="A22"><%= Float.floor(calibration.a22, 5) %></:col>
+  <:action :let={calibration}>
+    <.link patch={~p"/hardware/calibration/camera/#{calibration}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={calibration}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: calibration.id})}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/hardware/calibration/camera")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.CalibrationLive.Camera.FormComponent}
+    id={:new}
+    navigate={~p"/hardware/calibration/camera"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+    calibrations={@calibrations}
+    cameras={@cameras}
+  />
+</.modal>

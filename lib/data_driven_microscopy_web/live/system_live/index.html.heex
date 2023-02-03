@@ -1,0 +1,84 @@
+<.header>
+  Your Systems
+  <:actions>
+    <.link patch={~p"/hardware/systems/new"}>
+      <.button>New System</.button>
+    </.link>
+  </:actions>
+</.header>
+<.table
+  id="systems"
+  rows={@systems}
+  row_click={&JS.navigate(~p"/hardware/systems/#{&1}/report")}
+  active={&is_active?(&1, @active)}
+>
+  <:col :let={system} label="Name"><%= system.name %></:col>
+  <:action :let={system}>
+    <.link patch={~p"/hardware/systems/#{system}/edit"}>Edit</.link>
+  </:action>
+
+  <:extra>
+    <div class="flex ml-12 justify-between">
+      <div class="flex-rows">
+        <h1 class="font-semibold flex">Cameras:</h1>
+        <ul class="list-none">
+          <%= for camera <- @active_system.cameras do %>
+            <li class="flex"><%= camera.name %></li>
+          <% end %>
+        </ul>
+        <div class="mt-10">
+          <!--- place next thing here --->
+        </div>
+      </div>
+      <div class="w-2/5 ml-20">
+        <h1 class="font-semibold flex">Objectives:</h1>
+        <ul class="flex-row list-none">
+          <%= for obj <- @active_system.objectives do %>
+            <li class="flex">
+              <%= obj.name %>
+              <%= case get_icon(obj.pixelsize) do %>
+                <% "Green" -> %>
+                  <Heroicons.check_badge class="w-5 h-5 ml-2" fill="rgb(22 163 74)" mini />
+                <% "Yellow" -> %>
+                  <Heroicons.ellipsis_horizontal_circle
+                    mini
+                    fill="rgb(202 138 4)"
+                    class="w-5 h-5 ml-2"
+                  />
+                <% "Red" -> %>
+                  <Heroicons.exclamation_circle mini fill="rgb(225 29 72)" class="w-5 h-5 ml-2" />
+                <% _ -> %>
+                  <Heroicons.question_mark_circle
+                    mini
+                    fill="rgb(168 162 158)"
+                    class="w-5 h-5 ml-2"
+                  />
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </:extra>
+  <:action :let={system}>
+    <.link phx-click={JS.push("delete", value: %{id: system.id})} data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/hardware/systems")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.SystemLive.FormComponent}
+    id={:new}
+    navigate={~p"/hardware/systems"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+  />
+</.modal>

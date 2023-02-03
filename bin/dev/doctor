@@ -1,0 +1,119 @@
+#!/bin/sh
+
+if [ `uname` = "Linux" ]; then
+    # Check if running under X
+    session=$(loginctl show-session $(awk '/tty/ {print $1}' <(loginctl)) -p Type | awk -F= '{print $2}')
+    if [ "$session" = "wayland" ]; then
+        CLIPBOARD="wl-copy"
+    else
+        CLIPBOARD="xclip -selection clipboard"
+    fi
+elif [ `uname` = "Darwin" ]; then
+    CLIPBOARD="pbcopy"
+else
+    echo "Could not determine clipboard command for your OS"
+    exit 1
+fi
+
+install(){
+    if [ `uname` = "Linux" ]; then
+        recommend "sudo pacman -S \"$1\""
+    elif [ `uname` = "Darwin" ]; then
+        recommend "brew install \"$2\""
+    fi
+}
+
+recommend(){
+	if [ -z "$2" ]; then
+		exit_code=1
+	else
+		exit_code=$2
+	fi
+    printf "$1" | $CLIPBOARD
+    echo "$1"
+    exit $exit_code
+}
+
+check_asdf(){
+	echo "Checking if the asdf version manager is installed..."
+    if ! command -v asdf > /dev/null; then
+	if ! [ -d "$HOME/.asdf" ]; then
+            recommend "git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2"
+	else
+	    if [ -z "${SHELL##*bash*}" ]; then
+	        RC=$HOME/.bashrc
+	    elif [ -z "${SHELL##*zsh*}" ]; then
+		    RC=$HOME/.zshrc
+	    else
+		    echo "asdf is installed but not configured for your shell. I could not determine your shell, visit https://asdf-vm.com/guide/getting-started.html#_3-install-asdf"
+		exit 1
+            fi
+	    recommend "echo '. \"$HOME/.asdf/asdf.sh\"' >> $RC && source $RC"
+	fi
+    fi
+    for plugin in "$(cut -d' ' -f 1 < .tool-versions)"; do
+        if ! asdf plugin-list | grep -q "$plugin"; then
+            recommend "asdf plugin-add $plugin"
+        fi
+    done
+};
+
+check_postgres(){
+	echo "Checking if PostgreSQL is running..."
+    # check if pg_isready is available
+    if ! command -v pg_isready > /dev/null; then
+		if nc localhost 5432 &> /dev/null <<<""; then
+			echo "pg_isready not found, but port 5432 is open, assuming PostgreSQL is running"
+		else
+			install postgres postgres
+		fi
+	else
+		pg_isready
+    fi
+};
+
+check_repo_path(){
+	if [ -z "$repo_path" ]; then
+		recommend "export repo_path=\"$(pwd)/repo\"" 0
+	fi
+	#check if repo path is invalid, recommend mkdir -p
+	if [ ! -d "$repo_path" ]; then
+		recommend "mkdir -p \"$repo_path\""
+	fi
+}
+
+checkup(){
+    recommendation=$(mix checkup)
+    if [ -n "$recommendation" ]; then
+        recommend "$recommendation"
+    fi
+}
+
+check_migrations(){
+	echo "Checking if migrations are up..."
+    migrations=$(mix ecto.migrations)
+    if  grep -q "down" <<< "$migrations"; then
+        grep "down" <<< "$migrations"
+        recommend "mix ecto.migrate"
+    fi
+}
+
+check_assets(){
+	echo "Checking if NPM dependencies are installed..."
+    (
+        cd assets
+        npm ls 2>/dev/null > /dev/null
+        if [ $? -ne 0 ]; then
+            recommend "(cd assets && npm install)"
+        fi
+    ) || exit $?
+}
+
+check_asdf elm elixir nodejs
+check_postgres
+check_repo_path
+checkup
+check_migrations
+check_assets
+echo "App is ready to go!"
+recommend "mix phx.server" 0

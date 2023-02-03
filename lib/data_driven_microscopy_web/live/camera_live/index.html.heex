@@ -1,0 +1,37 @@
+<.header>
+  Your Cameras
+  <:actions>
+    <.link patch={~p"/hardware/cameras/new"}>
+      <.button>New Camera</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="cameras" rows={@cameras} active={fn _ -> false end}>
+  <:col :let={camera} label="Name"><%= camera.name %></:col>
+  <:action :let={camera}>
+    <.link patch={~p"/cameras/#{camera}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={camera}>
+    <.link phx-click={JS.push("delete", value: %{id: camera.id})} data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/hardware/cameras")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.CameraLive.FormComponent}
+    id={:new}
+    navigate={~p"/hardware/cameras"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+    systems={@systems}
+  />
+</.modal>

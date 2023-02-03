@@ -1,0 +1,72 @@
+<div class="flex items-center border-b-2 px-4">
+  <div>
+    <img class="h-20" src="https://cdn-icons-png.flaticon.com/128/149/149071.png" alt="User Icon" />
+  </div>
+  <div class="relative left-1/3 py-6 text-3xl"><%= @current_user.name %></div>
+</div>
+<div class="flex h-full px-4 pt-12 pb-8">
+<.live_component
+    id="left-navbar"
+    show
+    module={DataDrivenMicroscopyWeb.User.TeamLive.LeftNavbar}
+    current_user={@current_user}
+/>
+<div class="mx-[4rem]">
+    <div class="mb-8 border-b-4 border-b-[#335262] text-lg"><%= @page_title %></div>
+    <div class="">
+      <%= for team <- @teams do %>
+      <div class="flex justify-between align-center py-5">
+        <div class="text-lg"><%= team.name %></div>
+        <div>
+          <.link patch={~p"/teams/#{team.id}/edit"}>Edit</.link>
+          <.link phx-click="delete" phx-value-id={team.id}>Delete</.link>
+        </div>
+          </div>
+        <div phx-click="show-team-details" phx-value-id={team.id} class="cursor-pointer relative mb-4 flex min-h-[10rem] w-[45rem] items-center justify-center rounded text-center text-lg shadow-[5px_5px_3px_5px_#c1cdd7]">
+          <div class="flex flex-wrap justify-center mt-5 ml-[6rem]">
+          <%= for team_member <- team.users do %>
+            <div class="relative mr-[1.5rem] mb-5 flex h-14 w-[13rem] cursor-pointer items-center justify-center rounded text-center text-base shadow-[6px_6px_5px_-1px_#c1cdd7] hover:bg-[#c3cfd9]">
+              <%= team_member.name %>
+              <img class="absolute left-[-1rem] h-16" src="https://cdn-icons-png.flaticon.com/128/149/149071.png" alt="User Icon" />
+            </div>
+          <% end %>
+
+        </div>
+        <div class="absolute top-0 left-[-5rem] h-[10rem] w-[10rem] rounded-full bg-[#c3cfd9] p-7">
+          <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 256 256">
+            <rect width="256" height="256" fill="none" />
+            <circle cx="80" cy="168" r="32" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <path d="M32,224a60,60,0,0,1,96,0" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <circle cx="80" cy="64" r="32" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <path d="M32,120a60,60,0,0,1,96,0" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <circle cx="176" cy="168" r="32" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <path d="M128,224a60,60,0,0,1,96,0" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <circle cx="176" cy="64" r="32" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+            <path d="M128,120a60,60,0,0,1,96,0" fill="none" stroke="#4b5c6b" stroke-linecap="round" stroke-linejoin="round" stroke-width="20" />
+          </svg>
+        </div>
+      </div>
+      <% end %>
+      <.link :if={@current_user.is_admin} 
+      patch={~p"/teams/new"} 
+      class="relative my-8 flex h-14 w-auto cursor-pointer flex-col items-center justify-center rounded text-center text-lg shadow-[5px_5px_3px_5px_#c1cdd7]">
+        <span>New Team</span>
+      </.link>
+    </div>
+  </div>
+</div>
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="team-modal"
+  show
+  on_cancel={JS.navigate(~p"/teams")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.User.TeamLive.FormComponent}
+    id={:new}
+    navigate={~p"/teams/"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+  />
+</.modal>

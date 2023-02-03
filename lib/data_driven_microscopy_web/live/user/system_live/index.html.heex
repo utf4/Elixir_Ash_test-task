@@ -1,0 +1,168 @@
+
+
+<div class="flex items-center border-b-2 px-4">
+  <div>
+    <img class="h-20" src="https://cdn-icons-png.flaticon.com/128/149/149071.png" alt="User Icon" />
+  </div>
+  <div class="relative left-1/3 py-6 text-3xl"><%= @current_user.name %></div>
+</div>
+<div class="flex h-full px-4 pt-12 pb-8">
+<.live_component
+    id="left-navbar"
+    show
+    module={DataDrivenMicroscopyWeb.User.TeamLive.LeftNavbar}
+    action={@live_action}
+    current_user={@current_user}
+/>
+    <div class="px-12 py-4 flex-1 w-[70%]">
+      <%= for system <- @systems do %>
+        <button class="mb-4 flex w-full items-center justify-center space-x-2 rounded-md bg-[#c3cfd9] px-3 py-5 drop-shadow-md">
+          <span class="px-3 text-center text-xl text-black"><%= system.name %></span>
+        </button>
+        <div class="mb-8 h-auto rounded-lg bg-[#c3cfd9] shadow-[10px_2px_2px_-2px_#c1cdd7]">
+          <%= for camera <- system.cameras do %>
+            <div phx-click="trigger-calibration" phx-value-camera_id={camera.id} class="cursor-pointer relative mb-4 flex h-16 w-auto items-center justify-between rounded bg-white px-5 text-center text-lg">
+              <div ><span id={camera.id} class="text-xl"><%= camera.name %></span></div>
+              <div class="inline-flex items-end">
+                <%= case get_icon(camera.camera_calibration) do %>
+                  <% "Green" -> %>
+                    <Heroicons.check_badge class="w-5 h-5 ml-2" fill="rgb(22 163 74)" mini />
+                  <% "Yellow" -> %>
+                    <Heroicons.ellipsis_horizontal_circle
+                      mini
+                      fill="rgb(202 138 4)"
+                      class="w-5 h-5 ml-2"
+                    />
+                  <% "Red" -> %>
+                    <Heroicons.exclamation_circle mini fill="rgb(225 29 72)" class="w-5 h-5 ml-2" />
+                  <% _ -> %>
+                    <Heroicons.question_mark_circle
+                      mini
+                      fill="rgb(168 162 158)"
+                      class="w-5 h-5 ml-2"
+                    />
+                <% end %>
+                <span class="px-4 text-base italic">Last calibrated: <%= if camera.camera_calibration, do: format_date(camera.camera_calibration.updated_at) %></span>
+              </div>
+            </div>
+            <% key = get_unique_key(camera.id) %>
+              <%= if assigns[key] do %>
+                <.live_component
+                  module={DataDrivenMicroscopyWeb.User.SystemLive.CameraCalibrationComponent}
+                  id={camera.id}
+                  navigate={~p"/systems"}
+                  title={@page_title}
+                  action={@live_action}
+                  form={@camera_cal_form}
+                />
+              <% end %>
+          <% end %>
+        </div>
+          <%= for obj <- system.objectives do %>
+            <div phx-click="trigger-pixelsize" phx-value-obj_id={obj.id} class="cursor-pointer relative mb-4 flex h-16 w-auto items-center justify-between rounded px-5 text-center text-lg shadow-[5px_5px_3px_5px_#c1cdd7]">
+              <div class=""><span class="text-xl"><%= obj.name %></span></div>
+              <div class="inline-flex items-end">
+                <%= case get_icon(obj.pixelsize) do %>
+                  <% "Green" -> %>
+                    <Heroicons.check_badge class="w-5 h-5 ml-2" fill="rgb(22 163 74)" mini />
+                  <% "Yellow" -> %>
+                    <Heroicons.ellipsis_horizontal_circle
+                      mini
+                      fill="rgb(202 138 4)"
+                      class="w-5 h-5 ml-2"
+                    />
+                  <% "Red" -> %>
+                    <Heroicons.exclamation_circle mini fill="rgb(225 29 72)" class="w-5 h-5 ml-2" />
+                  <% _ -> %>
+                    <Heroicons.question_mark_circle
+                      mini
+                      fill="rgb(168 162 158)"
+                      class="w-5 h-5 ml-2"
+                    />
+                <% end %>
+                  <span class="px-4 text-base italic">Last calibrated: <%= if obj.pixelsize, do: format_date(obj.pixelsize.update_at) %></span>
+              </div>
+            </div>
+            <% key = get_unique_key(obj.id) %>
+              <%= if assigns[key] do %>
+                <.live_component
+                  module={DataDrivenMicroscopyWeb.User.SystemLive.PixelSizeComponent}
+                  id={obj.id}
+                  navigate={~p"/systems"}
+                  title={@page_title}
+                  action={@live_action}
+                  form={@pixel_form}
+                />
+              <% end %>
+        <% end %>
+          <div class="bg-[#c3cfd9] rounded">
+        <%= if @current_user.is_admin do %>
+          <div phx-click="trigger-add-component" phx-value-system_id={system.id} class="relative mb-12 flex h-14 w-auto cursor-pointer flex-col items-center justify-center rounded text-center text-lg shadow-[5px_5px_3px_5px_#c1cdd7]">Add Component</div>
+          <% key = get_unique_key(system.id) %>
+          <%= if assigns[key] do %>
+            <.simple_form :let={f} for={:atom} phx-change="display-component">
+              <.input
+                field={{f, :system_component}}
+                type="select"
+                label="Component Category"
+                options={[
+                  {"Select Component Catergory", nil},
+                  {"Camera", :camera},
+                  {"Objective", :objective}
+                ]}
+              />
+              <.input 
+                field={{f, :system_id}}
+                type="hidden"
+                value={system.id}
+              />
+            </.simple_form>
+            <% cam_key = get_unique_comp_key("camera", system.id) %>
+            <% obj_key = get_unique_comp_key("objective", system.id) %>
+            <%= if assigns[cam_key] do %>
+              <.live_component
+                  module={DataDrivenMicroscopyWeb.User.SystemLive.CameraComponent}
+                  id={system.id}
+                  navigate={~p"/systems"}
+                  title={@page_title}
+                  action={@live_action}
+                  form={@cam_form}
+                />
+            <% end %>
+            <%= if assigns[obj_key] do %>
+              <.live_component
+                  module={DataDrivenMicroscopyWeb.User.SystemLive.ObjectiveComponent}
+                  id={system.id}
+                  navigate={~p"/systems"}
+                  title={@page_title}
+                  action={@live_action}
+                  form={@obj_form}
+                />
+            <% end %>
+          <% end %>
+        <% end %>
+          </div>
+      <% end %>
+
+      <%= if @current_user.is_admin do %>
+        <button class="my-12 flex w-full items-center justify-center space-x-2 rounded-md bg-[#c3cfd9] px-3 py-5 drop-shadow-md">
+          <.link patch={~p"/systems/new"} class="px-3 text-center text-xl text-black">New Microscope</.link>
+        </button>
+      <% end %>
+    </div>
+  </div>
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/systems")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.SystemLive.FormComponent}
+    id={:new_system}
+    navigate={~p"/systems"}
+    title={@page_title}
+    action={@live_action}
+    form={@system_form} 
+  />
+</.modal>

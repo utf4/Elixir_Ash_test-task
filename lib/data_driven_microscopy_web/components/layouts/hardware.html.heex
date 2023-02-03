@@ -1,0 +1,126 @@
+<.base current_user={@current_user || nil}>
+  <:aside>
+    <.navbar title="Hardware">
+      <.navbar_entry navigate={~p"/hardware/systems"} title="Systems">
+        <:icon>
+          <Heroicons.wrench class="w-5 h-5 text-zinc-900" />
+        </:icon>
+      </.navbar_entry>
+      <.navbar_entry navigate={~p"/hardware/cameras"} title="Cameras">
+        <:icon>
+          <Heroicons.video_camera class="w-5 h-5 text-zinc-900 fill-black" />
+        </:icon>
+      </.navbar_entry>
+      <.navbar_entry navigate={~p"/hardware/objectives"} title="Objectives">
+        <:icon>
+          <Heroicons.magnifying_glass class="w-5 h-5 text-zinc-900" />
+        </:icon>
+      </.navbar_entry>
+
+      <.navbar_dropdown
+        title="Calibrations"
+        entries={[
+          %{navigate: ~p"/hardware/calibration/pixelsize", title: "Pixel size"},
+          %{navigate: ~p"/hardware/calibration/camera", title: "Camera Rotation"}
+        ]}
+      >
+        <:icon>
+          <Heroicons.viewfinder_circle class="w-5 h-5 text-zinc-900 fill-black" />
+        </:icon>
+      </.navbar_dropdown>
+    </.navbar>
+  </:aside>
+  <:main>
+    <%= @inner_content %>
+  </:main>
+  <:footer :if={@demo_status != nil}>
+    <div class="flex flex-col items-center justify-center md:flex-row">
+      <div class="inline-flex items-center gap-4">
+        <%= for plugin <- ["migration", "transfection"] do %>
+          <.formbutton
+            action={~p"/demo/set_dataset"}
+            button_text={plugin}
+            conn={@conn}
+            input_data={plugin}
+            active={
+              if(@demo_state != %{},
+                do: @demo_state.dataset == plugin,
+                else: false
+              )
+            }
+          >
+            <:button_icon>
+              <Heroicons.puzzle_piece
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 mt-0.5 ml-1"
+              />
+            </:button_icon>
+          </.formbutton>
+        <% end %>
+        <.formbutton action={~p"/demo/reset"} button_text="Reset" conn={@conn}>
+          <:button_icon>
+            <Heroicons.arrow_path
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 mt-0.5 ml-1"
+            />
+          </:button_icon>
+        </.formbutton>
+      </div>
+    </div>
+    <div class="flex flex-col items-center justify-center md:flex-row">
+      <div class="flex items-center gap-4">
+        <%= case @demo_status do %>
+          <% :started -> %>
+          <% :waiting -> %>
+            <.formbutton
+              action={~p"/demo/start"}
+              button_text="Start"
+              conn={@conn}
+              input_data={@demo_state.dataset}
+            >
+              <:button_icon>
+                <Heroicons.paper_airplane
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6 mt-0.5 ml-1"
+                />
+              </:button_icon>
+            </.formbutton>
+          <% :paused -> %>
+            <.formbutton
+              action={~p"/demo/resume"}
+              button_text="Resume"
+              conn={@conn}
+              input_data={@demo_state.dataset}
+            >
+              <:button_icon>
+                <Heroicons.paper_airplane
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6 mt-0.5 ml-1"
+                />
+              </:button_icon>
+            </.formbutton>
+          <% :active -> %>
+            <.formbutton
+              action={~p"/demo/"}
+              button_text="Sending..."
+              conn={@conn}
+              input_data={@demo_state.dataset}
+            />
+            <.formbutton action={~p"/demo/stop"} button_text="Pause" conn={@conn}>
+              <:button_icon>
+                <Heroicons.pause
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6 mt-0.5 ml-1"
+                />
+              </:button_icon>
+            </.formbutton>
+        <% end %>
+      </div>
+    </div>
+  </:footer>
+</.base>

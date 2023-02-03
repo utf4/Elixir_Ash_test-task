@@ -1,0 +1,42 @@
+<.header>
+  Your Objectives
+  <:actions>
+    <.link patch={~p"/hardware/objectives/new"}>
+      <.button>New Objective</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="objectives" rows={@objectives} active={fn _ -> false end}>
+  <:col :let={objective} label="Name"><%= objective.name %></:col>
+  <:col :let={objective} label="Mag."><%= "#{objective.magnification}X" %></:col>
+  <:col :let={objective} label="NA"><%= objective.numerical_aperture %></:col>
+  <:col :let={objective} label="Imm.">
+    <%= String.capitalize(Atom.to_string(objective.immersion_media)) %>
+  </:col>
+  <:action :let={objective}>
+    <.link patch={~p"/hardware/objectives/#{objective}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={objective}>
+    <.link phx-click={JS.push("delete", value: %{id: objective.id})} data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="system-modal"
+  show
+  on_cancel={JS.navigate(~p"/hardware/objectives")}
+>
+  <.live_component
+    module={DataDrivenMicroscopyWeb.ObjectiveLive.FormComponent}
+    id={:new}
+    navigate={~p"/hardware/objectives"}
+    title={@page_title}
+    action={@live_action}
+    form={@form}
+    systems={@systems}
+  />
+</.modal>
